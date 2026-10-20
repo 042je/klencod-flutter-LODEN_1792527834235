@@ -1,0 +1,24 @@
+name: lynox_chat
+description: تطبيق شات Lynox - عميل لـ Lynox Chat API
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.2.0 <4.0.0'
+  flutter: '>=3.16.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  http: ^1.1.2
+  shared_preferences: ^2.2.2
+  file_picker: ^6.1.1
+  url_launcher: ^6.2.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true

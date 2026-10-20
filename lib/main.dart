@@ -1,18 +1,62 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'api.dart';
 import 'chat_screen.dart';
 import 'login_screen.dart';
 
-Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  final loggedIn = await LynoxApi.instance.restore();
-  runApp(LynoxApp(loggedIn: loggedIn));
+void main() {
+  runZonedGuarded(() {
+    WidgetsFlutterBinding.ensureInitialized();
+
+    // بدل الشاشة الرمادية/البيضاء، اعرض الخطأ على الشاشة.
+    ErrorWidget.builder = (details) => Material(
+          color: Colors.white,
+          child: SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                'حصل خطأ:\n${details.exceptionAsString()}',
+                textDirection: TextDirection.ltr,
+                style: const TextStyle(color: Colors.red, fontSize: 13),
+              ),
+            ),
+          ),
+        );
+
+    runApp(const LynoxApp());
+  }, (error, stack) {
+    debugPrint('Uncaught: $error\n$stack');
+  });
 }
 
-class LynoxApp extends StatelessWidget {
+class _Boot {
   final bool loggedIn;
-  const LynoxApp({super.key, required this.loggedIn});
+  final String? error;
+  const _Boot(this.loggedIn, [this.error]);
+}
+
+class LynoxApp extends StatefulWidget {
+  const LynoxApp({super.key});
+
+  @override
+  State<LynoxApp> createState() => _LynoxAppState();
+}
+
+class _LynoxAppState extends State<LynoxApp> {
+  late final Future<_Boot> _boot = _start();
+
+  Future<_Boot> _start() async {
+    try {
+      final ok = await LynoxApi.instance
+          .restore()
+          .timeout(const Duration(seconds: 10), onTimeout: () => false);
+      return _Boot(ok);
+    } catch (e) {
+      return _Boot(false, e.toString());
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +79,45 @@ class LynoxApp extends StatelessWidget {
         textDirection: TextDirection.rtl,
         child: child ?? const SizedBox.shrink(),
       ),
-      home: loggedIn ? const ChatScreen() : const LoginScreen(),
+      home: FutureBuilder<_Boot>(
+        future: _boot,
+        builder: (context, snap) {
+          if (snap.connectionState != ConnectionState.done) {
+            return const Scaffold(
+              body: Center(child: CircularProgressIndicator()),
+            );
+          }
+          final b = snap.data ?? const _Boot(false);
+          if (b.error != null) {
+            return Scaffold(
+              body: SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text('مشكلة في بدء التطبيق:'),
+                      const SizedBox(height: 8),
+                      Text(b.error!,
+                          textDirection: TextDirection.ltr,
+                          style: const TextStyle(color: Colors.red)),
+                      const SizedBox(height: 16),
+                      FilledButton(
+                        onPressed: () => Navigator.of(context).pushReplacement(
+                          MaterialPageRoute(
+                              builder: (_) => const LoginScreen()),
+                        ),
+                        child: const Text('متابعة'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }
+          return b.loggedIn ? const ChatScreen() : const LoginScreen();
+        },
+      ),
     );
   }
 }

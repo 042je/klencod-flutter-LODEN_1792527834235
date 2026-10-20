@@ -352,7 +352,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                   hintText: 'اكتب رسالة...',
                   counterText: '',
                   filled: true,
-                  fillColor: cs.surfaceVariant.withOpacity(0.5),
+                  fillColor: cs.onSurface.withAlpha(20),
                   contentPadding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                   border: OutlineInputBorder(
@@ -531,7 +531,7 @@ class _Bubble extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       _time(m.time),
-                      style: TextStyle(fontSize: 10, color: fg.withOpacity(0.6)),
+                      style: TextStyle(fontSize: 10, color: fg.withAlpha(153)),
                     ),
                   ],
                 ),
